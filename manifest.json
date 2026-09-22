@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "vinicgobbi.battery",
   "name": "Battery",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "author": "vinicgobbi",
   "license": "MIT",
   "homepage": "https://github.com/vinicgobbi/omarchy-plugin-battery",
