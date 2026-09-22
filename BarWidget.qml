@@ -18,10 +18,10 @@ Panel {
   ipcTarget: "vinicgobbi.battery"
   property var batteryInfo: ({})
   property var systemInfo: ({})
+  // Available profile names (power-saver/balanced/performance, whatever
+  // powerprofilesctl reports) — which one is active for either source is
+  // read separately, below.
   property var profiles: []
-  property string activeProfile: ""
-  property int profileIndex: 0
-  property bool cursorActive: false
   // Remembered profile per power source (laptop-only, like the rest of this
   // widget — omarchy-powerprofiles-set stores these in
   // $XDG_STATE_HOME/omarchy/powerprofiles/{ac,battery}), independent of
@@ -76,15 +76,6 @@ Panel {
       Touchpad: UPowerDeviceType.Touchpad,
       Wearable: UPowerDeviceType.Wearable
     }
-  }
-
-  function selectProfileByDelta(delta) {
-    profileIndex = Model.selectProfileIndex(profileIndex, delta, profiles)
-  }
-
-  function activateSelectedProfile() {
-    if (profileIndex < 0 || profileIndex >= profiles.length) return
-    setProfile(profiles[profileIndex])
   }
 
   function batteryIcon() {
@@ -206,23 +197,11 @@ Panel {
   }
 
   function updateProfiles(raw) {
-    var parsed = Model.parseProfiles(raw, profileIndex)
+    var parsed = Model.parseProfiles(raw, 0)
     // Same guard as battery: preserve the last known profile list across
     // transient empty payloads so the buttons don't blink out.
     if (parsed.profiles.length === 0) return
     profiles = parsed.profiles
-    activeProfile = parsed.activeProfile
-    profileIndex = parsed.profileIndex
-    if (opened && !cursorActive) {
-      var idx = profiles.indexOf(activeProfile)
-      if (idx >= 0) profileIndex = idx
-    }
-  }
-
-  function setProfile(profile) {
-    if (!profile || actionProc.running) return
-    actionProc.command = ["omarchy-powerprofiles-set", root.discharging ? "battery" : "ac", profile]
-    actionProc.running = true
   }
 
   // Sets the remembered profile for a given source (ac/battery), regardless
@@ -249,9 +228,6 @@ Panel {
       }
 
       refresh()
-      var idx = profiles.indexOf(activeProfile)
-      profileIndex = idx >= 0 ? idx : 0
-      cursorActive = false
     }
   }
 
@@ -277,11 +253,6 @@ Panel {
     id: systemProc
     command: ["omarchy-system-stats"]
     stdout: StdioCollector { waitForEnd: true; onStreamFinished: root.updateKeyValue(text, "system") }
-  }
-
-  Process {
-    id: actionProc
-    onExited: root.refresh()
   }
 
   Process {
@@ -390,12 +361,6 @@ Panel {
     PanelKeyCatcher {
       id: keyCatcher
       anchors.fill: parent
-      onMoveRequested: function(dx, dy) {
-        if (!root.cursorActive) { root.cursorActive = true; return }
-        if (dx !== 0) root.selectProfileByDelta(dx)
-        else if (dy !== 0) root.selectProfileByDelta(dy)
-      }
-      onActivateRequested: if (root.cursorActive) root.activateSelectedProfile()
       onCloseRequested: root.close()
       onTabRequested: function(direction) { root.switchPanel(direction) }
 
@@ -546,7 +511,7 @@ Panel {
 
         Column {
           width: parent.width
-          spacing: Style.space(10)
+          spacing: Style.space(14)
 
           PanelSectionHeader {
             text: "POWER PROFILE"
@@ -554,89 +519,56 @@ Panel {
             fontFamily: root.bar.fontFamily
           }
 
-          Row {
-            id: profileRow
-            width: parent.width
-            spacing: Style.space(6)
-
-            readonly property real cellWidth: root.profiles.length > 0
-              ? (width - spacing * (root.profiles.length - 1)) / root.profiles.length
-              : 0
-
-            Repeater {
-              model: root.profiles
-              Button {
-                required property var modelData
-                required property int index
-                width: profileRow.cellWidth
-                iconText: root.profileIcon(String(modelData))
-                iconSize: Style.font.title
-                text: String(modelData).charAt(0).toUpperCase() + String(modelData).slice(1)
-                fontSize: Style.font.bodySmall
-                foreground: root.bar.foreground
-                fontFamily: root.bar.fontFamily
-                horizontalPadding: Style.spacing.controlPaddingX
-                verticalPadding: Style.spacing.controlPaddingY + Style.space(2)
-                bordered: true
-                active: root.activeProfile === modelData
-                hasCursor: root.cursorActive && root.profileIndex === index
-                onClicked: root.setProfile(modelData)
-                onHovered: function(h) {
-                  if (h) {
-                    root.cursorActive = true
-                    root.profileIndex = index
-                  }
-                }
-              }
-            }
-          }
-
-          // The picker above only ever touches whichever source is live
-          // right now — this lets a profile be set for the other one too
-          // (e.g. pick the battery profile without unplugging first).
+          // One picker per source instead of one picker for "whatever's
+          // active right now" — so AC and battery can each be set without
+          // having to unplug (or plug in) first to reach that source.
           Repeater {
             model: [
-              { source: "ac", label: "On AC", value: root.acProfile, isCurrent: !root.discharging },
-              { source: "battery", label: "On battery", value: root.batteryProfile, isCurrent: root.discharging }
+              { source: "ac", label: "AC", value: root.acProfile, isCurrent: !root.discharging },
+              { source: "battery", label: "Battery", value: root.batteryProfile, isCurrent: root.discharging }
             ]
 
-            Row {
-              id: sourceRow
+            Column {
+              id: sourceBlock
               required property var modelData
               width: parent.width
-              spacing: Style.space(8)
+              spacing: Style.space(6)
 
               Text {
                 textFormat: Text.PlainText
-                text: sourceRow.modelData.label + (sourceRow.modelData.isCurrent ? " · now" : "")
-                color: sourceRow.modelData.isCurrent ? root.bar.foreground : Qt.darker(root.bar.foreground, 1.4)
+                text: sourceBlock.modelData.label.toUpperCase() + (sourceBlock.modelData.isCurrent ? " — CURRENT" : "")
+                color: sourceBlock.modelData.isCurrent ? root.bar.foreground : Qt.darker(root.bar.foreground, 1.4)
                 font.family: root.bar.fontFamily
-                font.pixelSize: Style.font.bodySmall
-                font.bold: sourceRow.modelData.isCurrent
-                width: Style.space(84)
-                elide: Text.ElideRight
-                anchors.verticalCenter: parent.verticalCenter
+                font.pixelSize: Style.font.caption
+                font.bold: true
+                font.letterSpacing: 1.0
               }
 
               Row {
-                spacing: Style.space(4)
-                anchors.verticalCenter: parent.verticalCenter
+                id: sourceProfileRow
+                width: parent.width
+                spacing: Style.space(6)
+
+                readonly property real cellWidth: root.profiles.length > 0
+                  ? (width - spacing * (root.profiles.length - 1)) / root.profiles.length
+                  : 0
 
                 Repeater {
                   model: root.profiles
                   Button {
                     required property var modelData
+                    width: sourceProfileRow.cellWidth
                     iconText: root.profileIcon(String(modelData))
-                    iconSize: Style.font.body
-                    tooltipText: String(modelData).charAt(0).toUpperCase() + String(modelData).slice(1)
+                    iconSize: Style.font.title
+                    text: String(modelData).charAt(0).toUpperCase() + String(modelData).slice(1)
                     fontSize: Style.font.bodySmall
                     foreground: root.bar.foreground
                     fontFamily: root.bar.fontFamily
                     horizontalPadding: Style.spacing.controlPaddingX
-                    verticalPadding: Style.spacing.controlPaddingY
+                    verticalPadding: Style.spacing.controlPaddingY + Style.space(2)
                     bordered: true
-                    active: sourceRow.modelData.value === modelData
-                    onClicked: root.setSourceProfile(sourceRow.modelData.source, modelData)
+                    active: sourceBlock.modelData.value === modelData
+                    onClicked: root.setSourceProfile(sourceBlock.modelData.source, modelData)
                   }
                 }
               }
