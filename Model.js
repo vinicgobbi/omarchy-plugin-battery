@@ -126,9 +126,13 @@ function deviceIcon(type, types) {
   }
 }
 
+// UPower reports whatever a Bluetooth/HID peripheral itself advertises as
+// its name, so d.model is untrusted input — clip it (shown in the DEVICES
+// list, and sent as-is into a notification argv by Service.qml).
 function deviceName(device) {
   var d = device || {}
-  return d.model && String(d.model).trim() !== "" ? d.model : "Device"
+  var name = d.model && String(d.model).trim() !== "" ? String(d.model).trim() : "Device"
+  return name.length > 60 ? name.slice(0, 59) + "…" : name
 }
 
 if (typeof module !== "undefined") {

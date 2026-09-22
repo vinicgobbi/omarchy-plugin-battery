@@ -25,9 +25,13 @@ function isPeripheral(device) {
   return !!(device && device.isPresent && !device.isLaptopBattery && !device.powerSupply)
 }
 
+// UPower reports whatever a Bluetooth/HID peripheral itself advertises as
+// its name, so d.model is untrusted input — clip it before it goes into the
+// low-battery notification's headline.
 function peripheralName(device) {
   var d = device || {}
-  return d.model && String(d.model).trim() !== "" ? d.model : "Device"
+  var name = d.model && String(d.model).trim() !== "" ? String(d.model).trim() : "Device"
+  return name.length > 60 ? name.slice(0, 59) + "…" : name
 }
 
 // Peripherals have no "on battery" concept (they always run off their own
