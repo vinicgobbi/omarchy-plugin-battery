@@ -2,12 +2,23 @@
 
 ## Local setup
 
-Symlink this repo into your Omarchy plugins directory so edits hot-reload
-without reinstalling:
+`omarchy plugin validate .` rejects a plugin folder that contains a
+symlink, so a plain `ln -s` of this repo into
+`~/.config/omarchy/plugins/` won't load. Clone it there instead
+(a real, separate working copy — like `omarchy plugin add` would
+leave):
 
 ```bash
-ln -s "$(pwd)" ~/.config/omarchy/plugins/vinicgobbi.battery
+git clone "$(pwd)" ~/.config/omarchy/plugins/vinicgobbi.battery
 omarchy plugin enable vinicgobbi.battery
+```
+
+To pick up local edits without re-cloning, add this repo as a remote
+in the installed copy and pull:
+
+```bash
+git -C ~/.config/omarchy/plugins/vinicgobbi.battery remote add dev "$(pwd)"
+git -C ~/.config/omarchy/plugins/vinicgobbi.battery pull dev main
 ```
 
 This plugin's service is a clone of the built-in `omarchy.battery`, and
@@ -15,9 +26,10 @@ its bar widget is a clone of `omarchy.power` (own id, so it doesn't
 collide with the built-in's IPC target). Disable both `omarchy.battery`
 and `omarchy.power` to avoid duplicate services/icons.
 
-`BarWidget.qml` (the plugin's entry point) hot-reloads on its own.
-`Service.qml` is loaded once and kept alive by the shell, so a change to
-it only takes effect after a full shell restart:
+`BarWidget.qml` (the plugin's entry point) hot-reloads on its own once
+the installed copy is updated. `Service.qml` is loaded once and kept
+alive by the shell, so a change to it only takes effect after a full
+shell restart:
 
 ```bash
 omarchy restart shell
