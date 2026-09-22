@@ -33,12 +33,10 @@ Panel {
   }
   // Matches Service.qml's batteryThreshold, so a device flagged critical
   // here is the same one the low-battery notification already fired for.
+  // Binary (normal/critical), no in-between tier: the shared design system
+  // has no "caution" token, only foreground and urgent/red, and every other
+  // panel (bluetooth, network, ...) signals state the same binary way.
   readonly property int peripheralLowThreshold: 10
-  // Earlier, purely visual heads-up — no notification fires for this tier.
-  readonly property int peripheralCautionThreshold: 25
-  // The shared design system has no "caution" token (only foreground,
-  // accent, and urgent/red), so this is a plugin-local amber.
-  readonly property color peripheralCautionColor: "#d9a441"
   // Not a binding on purpose: UPower.devices.values only changes identity
   // when a device is added/removed, not when an existing device's
   // isPresent/percentage/ready settle after the shell starts (or after a
@@ -571,15 +569,16 @@ Panel {
               required property var modelData
               readonly property int percent: Math.round(modelData.percentage * 100)
               readonly property bool critical: percent <= root.peripheralLowThreshold
-              readonly property bool caution: !critical && percent <= root.peripheralCautionThreshold
-              readonly property color levelColor: critical ? Color.urgent : (caution ? root.peripheralCautionColor : root.bar.foreground)
+              // Same binary state color every other panel uses (foreground
+              // vs urgent) — see bluetooth Panel.qml's statusColor.
+              readonly property color levelColor: critical ? Color.urgent : root.bar.foreground
               width: parent.width
               spacing: Style.space(10)
 
               Text {
                 id: deviceIconText
                 textFormat: Text.PlainText
-                text: deviceRow.critical ? "󰂎" : root.deviceIcon(deviceRow.modelData.type)
+                text: root.deviceIcon(deviceRow.modelData.type)
                 color: deviceRow.levelColor
                 font.family: root.bar.fontFamily
                 font.pixelSize: Style.font.title
@@ -629,7 +628,7 @@ Panel {
                 id: devicePercentText
                 textFormat: Text.PlainText
                 text: deviceRow.percent + "%"
-                color: deviceRow.levelColor
+                color: deviceRow.critical ? Color.urgent : Qt.darker(root.bar.foreground, 1.4)
                 font.family: root.bar.fontFamily
                 font.pixelSize: Style.font.bodySmall
                 font.bold: deviceRow.critical

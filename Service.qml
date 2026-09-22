@@ -73,9 +73,12 @@ Item {
     if (pendingPeripheralWarnings.length === 0) return
     var next = pendingPeripheralWarnings[0]
     pendingPeripheralWarnings = pendingPeripheralWarnings.slice(1)
+    // Mirrors omarchy-battery-low's own notification (glyph, urgency, icon,
+    // timeout, phrasing) — just naming the device, and skipping its
+    // battery-low hooks, which are for the laptop's own battery.
     peripheralWarningProcess.command = [
-      "omarchy-notification-send", "-g", "󰂑", "-u", "critical", "-i", "battery-caution", "-t", "30000",
-      next.name + " battery low", "Down to " + next.level + "%"
+      "omarchy-notification-send", "-g", "󱐋", "-u", "critical", "-i", "battery-caution", "-t", "30000",
+      next.name + ": time to recharge!", "Battery is down to " + next.level + "%"
     ]
     peripheralWarningProcess.running = true
   }
