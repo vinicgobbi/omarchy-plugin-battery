@@ -10,9 +10,12 @@ ln -s "$(pwd)" ~/.config/omarchy/plugins/vinicgobbi.battery
 omarchy plugin enable vinicgobbi.battery
 ```
 
-This plugin is a clone of the built-in `omarchy.battery`, so disable that
-one to avoid two battery services running at once.
+This plugin's service is a clone of the built-in `omarchy.battery`, and
+its bar widget is a clone of `omarchy.power` (own id, so it doesn't
+collide with the built-in's IPC target). Disable both `omarchy.battery`
+and `omarchy.power` to avoid duplicate services/icons.
 
+`BarWidget.qml` (the plugin's entry point) hot-reloads on its own.
 `Service.qml` is loaded once and kept alive by the shell, so a change to
 it only takes effect after a full shell restart:
 
@@ -28,11 +31,17 @@ omarchy plugin validate .
 
 ## Structure
 
-- `manifest.json` — plugin metadata (id, kind, entry point)
+- `manifest.json` — plugin metadata (id, kinds, entry points)
 - `Service.qml` — polls `UPower`, sends the low-battery warning, and
   applies the power profile on AC/battery transitions
-- `BatteryModel.js` — pure helpers: percentage, discharging state, and
-  the low-battery warning decision
+- `BatteryModel.js` — pure helpers for `Service.qml`: percentage,
+  discharging state, and the low-battery warning decision
+- `BarWidget.qml` — cloned from `omarchy.power`'s `Panel.qml`: the bar
+  icon, hero, stats, power profile picker, plus the DEVICES section
+  built from `UPower.devices`
+- `Model.js` — cloned from `omarchy.power`'s `Model.js` (icon glyph,
+  profile parsing, charge-threshold detection), plus the other-devices
+  list/icon/name helpers for the DEVICES section
 
 ## Commits and releases
 

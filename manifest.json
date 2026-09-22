@@ -6,14 +6,23 @@
   "author": "vinicgobbi",
   "license": "MIT",
   "homepage": "https://github.com/vinicgobbi/omarchy-plugin-battery",
-  "description": "Low battery warning service",
+  "description": "Battery/power bar widget (cloned from omarchy.power) with a DEVICES section for other UPower peripherals, plus the omarchy.battery low-battery service",
   "kinds": [
-    "service"
+    "service",
+    "bar-widget"
   ],
   "entryPoints": {
-    "service": "Service.qml"
+    "service": "Service.qml",
+    "barWidget": "BarWidget.qml"
   },
   "omarchy": {
-    "clonedFrom": "omarchy.battery"
+    "clonedFrom": "omarchy.power"
+  },
+  "barWidget": {
+    "displayName": "Battery",
+    "description": "Battery icon, power profile picker and system stats, plus a DEVICES section listing other UPower devices reporting a charge level (mouse, keyboard, headset, ...)",
+    "category": "System",
+    "defaultSection": "right",
+    "allowMultiple": false
   }
 }

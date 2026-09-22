@@ -1,8 +1,21 @@
 # omarchy-plugin-battery
 
-A battery service for the [Omarchy](https://omarchy.org/) shell, cloned
-from the built-in `omarchy.battery`. Watches the battery level, warns you
-when it's low, and switches power profiles when you plug/unplug.
+A battery service and bar widget for the [Omarchy](https://omarchy.org/)
+shell. The service is cloned from the built-in `omarchy.battery`
+(low-battery warning, power-profile switching on plug/unplug); the bar
+widget is cloned from `omarchy.power` (battery icon, hero, stats, power
+profile picker), with a **DEVICES** section added.
+
+## Features
+
+- Everything the native `omarchy.power` widget has: battery icon and
+  percentage, charge/discharge status, battery size and cycle count,
+  time left/to full, and the power profile picker.
+- Its popup adds a **DEVICES** section listing every other UPower
+  device reporting a charge level — Bluetooth/USB mouse, keyboard,
+  headset, game controller, etc.
+- The `omarchy.battery` low-battery notification and AC/battery power
+  profile switching, running as a background service.
 
 ## Install
 
@@ -10,8 +23,8 @@ when it's low, and switches power profiles when you plug/unplug.
 omarchy plugin add https://github.com/vinicgobbi/omarchy-plugin-battery.git --enable
 ```
 
-Disable the built-in `omarchy.battery` service to avoid running two
-battery services at once.
+Disable the built-in `omarchy.battery` service and the `omarchy.power`
+bar icon to avoid duplicate battery services/icons.
 
 ## Uninstall
 
