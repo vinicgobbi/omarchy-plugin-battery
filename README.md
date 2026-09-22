@@ -13,8 +13,8 @@ profile picker), with a **DEVICES** section added.
   time left/to full, and the power profile picker.
 - Its popup adds a **DEVICES** section listing every other UPower
   device reporting a charge level — Bluetooth/USB mouse, keyboard,
-  headset, game controller, etc. One at or below the low-battery
-  threshold (10%) is highlighted in red.
+  headset, game controller, etc. Each row has a mini charge meter, and
+  turns amber at 25% or red at 10% and below.
 - The `omarchy.battery` low-battery notification and AC/battery power
   profile switching, running as a background service — extended to
   also warn when one of those other devices gets low, not just the
