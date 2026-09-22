@@ -94,7 +94,10 @@ function modeLabel(device, onBattery, states) {
 // Devices UPower tracks besides the laptop's own battery: Bluetooth/USB
 // mice, keyboards, headsets, controllers, etc. that report a charge level.
 function otherDevices(values) {
-  var list = Array.isArray(values) ? values : []
+  // values is a Qt QObjectList (UPower.devices.values), not a real JS
+  // Array, so Array.isArray(values) is false — index/length access still
+  // works, so duck-type on .length instead.
+  var list = values && values.length ? values : []
   var result = []
   for (var i = 0; i < list.length; i++) {
     var d = list[i]

@@ -31,7 +31,15 @@ Panel {
     var device = UPower.displayDevice
     return !!(device && device.isPresent)
   }
-  readonly property var otherDevices: Model.otherDevices(UPower.devices.values)
+  // Not a binding on purpose: UPower.devices.values only changes identity
+  // when a device is added/removed, not when an existing device's
+  // isPresent/percentage/ready settle after the shell starts (or after a
+  // device connects later). Recomputed explicitly instead, below.
+  property var otherDevices: []
+
+  function refreshOtherDevices() {
+    root.otherDevices = Model.otherDevices(UPower.devices.values)
+  }
 
   function upowerStates() {
     return {
@@ -161,6 +169,7 @@ Panel {
   }
 
   function refresh() {
+    refreshOtherDevices()
     if (!batteryPresent) return
 
     if (!batteryProc.running) batteryProc.running = true
@@ -246,6 +255,14 @@ Panel {
   }
 
   Timer { interval: 5000; running: root.opened; repeat: true; onTriggered: root.refresh() }
+
+  // Devices connecting/disconnecting changes UPower.devices.values itself,
+  // which this does fire for (unlike an existing device's own properties
+  // settling — see refreshOtherDevices()).
+  Connections {
+    target: UPower.devices
+    function onValuesChanged() { root.refreshOtherDevices() }
+  }
 
   // Rotate the status phrase while the panel is open and we're in a
   // rotating state (charging or on battery). The text swap is wrapped in a
