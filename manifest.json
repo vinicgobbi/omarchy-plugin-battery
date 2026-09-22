@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "vinicgobbi.battery",
+  "name": "Battery",
+  "version": "0.1.0",
+  "author": "vinicgobbi",
+  "license": "MIT",
+  "homepage": "https://github.com/vinicgobbi/omarchy-plugin-battery",
+  "description": "Low battery warning service",
+  "kinds": [
+    "service"
+  ],
+  "entryPoints": {
+    "service": "Service.qml"
+  },
+  "omarchy": {
+    "clonedFrom": "omarchy.battery"
+  }
+}
