@@ -1,4 +1,4 @@
-# Development
+# Contributing
 
 ## Local setup
 
@@ -62,6 +62,12 @@ active right after (`reapplyCurrentProfile()`). The remembered value
 per source lives in `$XDG_STATE_HOME/omarchy/powerprofiles/{ac,battery}`
 (overridable via `OMARCHY_POWERPROFILES_STATE_DIR`) — there's no CLI
 getter for it, so `BarWidget.qml` reads those two files directly.
+
+## CI
+
+`.github/workflows/ci.yml` runs on every push to `main` (and on pull
+requests) and validates `manifest.json` and every `.qml` file with
+`qmllint`, so a syntax error can't land on `main`.
 
 ## Commits and releases
 
