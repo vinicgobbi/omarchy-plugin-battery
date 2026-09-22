@@ -32,16 +32,24 @@ omarchy plugin validate .
 ## Structure
 
 - `manifest.json` — plugin metadata (id, kinds, entry points)
-- `Service.qml` — polls `UPower`, sends the low-battery warning, and
-  applies the power profile on AC/battery transitions
+- `Service.qml` — polls `UPower`, sends the low-battery warning for the
+  laptop and for other devices, and applies the power profile on
+  AC/battery transitions
 - `BatteryModel.js` — pure helpers for `Service.qml`: percentage,
-  discharging state, and the low-battery warning decision
+  discharging state, the low-battery warning decision (laptop and
+  peripherals), and the peripheral filter/name helpers
 - `BarWidget.qml` — cloned from `omarchy.power`'s `Panel.qml`: the bar
   icon, hero, stats, power profile picker, plus the DEVICES section
-  built from `UPower.devices`
+  built from `UPower.devices` (red-highlighted below the low-battery
+  threshold)
 - `Model.js` — cloned from `omarchy.power`'s `Model.js` (icon glyph,
   profile parsing, charge-threshold detection), plus the other-devices
   list/icon/name helpers for the DEVICES section
+
+Peripheral low-battery notifications use `omarchy-notification-send`
+directly rather than `omarchy-battery-low` (which also runs the
+`battery-low` hooks meant for the laptop's own battery — running those
+for a mouse would be wrong).
 
 ## Commits and releases
 

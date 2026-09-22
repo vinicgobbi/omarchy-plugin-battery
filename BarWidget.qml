@@ -31,6 +31,9 @@ Panel {
     var device = UPower.displayDevice
     return !!(device && device.isPresent)
   }
+  // Matches Service.qml's batteryThreshold, so a device flagged low here is
+  // the same one the low-battery notification already fired for.
+  readonly property int peripheralLowThreshold: 10
   // Not a binding on purpose: UPower.devices.values only changes identity
   // when a device is added/removed, not when an existing device's
   // isPresent/percentage/ready settle after the shell starts (or after a
@@ -559,14 +562,17 @@ Panel {
             model: root.otherDevices
 
             Row {
+              id: deviceRow
               required property var modelData
+              readonly property int percent: Math.round(modelData.percentage * 100)
+              readonly property bool low: percent <= root.peripheralLowThreshold
               width: parent.width
               spacing: Style.space(10)
 
               Text {
                 textFormat: Text.PlainText
-                text: root.deviceIcon(modelData.type)
-                color: root.bar.foreground
+                text: deviceRow.low ? "󰂎" : root.deviceIcon(deviceRow.modelData.type)
+                color: deviceRow.low ? Color.urgent : root.bar.foreground
                 font.family: root.bar.fontFamily
                 font.pixelSize: Style.font.title
                 anchors.verticalCenter: parent.verticalCenter
@@ -574,7 +580,7 @@ Panel {
 
               Text {
                 textFormat: Text.PlainText
-                text: root.deviceName(modelData)
+                text: root.deviceName(deviceRow.modelData)
                 color: root.bar.foreground
                 font.family: root.bar.fontFamily
                 font.pixelSize: Style.font.bodySmall
@@ -585,10 +591,11 @@ Panel {
 
               Text {
                 textFormat: Text.PlainText
-                text: Math.round(modelData.percentage * 100) + "%"
-                color: Qt.darker(root.bar.foreground, 1.2)
+                text: deviceRow.percent + "%"
+                color: deviceRow.low ? Color.urgent : Qt.darker(root.bar.foreground, 1.2)
                 font.family: root.bar.fontFamily
                 font.pixelSize: Style.font.bodySmall
+                font.bold: deviceRow.low
                 anchors.verticalCenter: parent.verticalCenter
               }
             }
