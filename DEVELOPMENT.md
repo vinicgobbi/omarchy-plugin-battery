@@ -39,9 +39,10 @@ omarchy plugin validate .
   discharging state, the low-battery warning decision (laptop and
   peripherals), and the peripheral filter/name helpers
 - `BarWidget.qml` — cloned from `omarchy.power`'s `Panel.qml`: the bar
-  icon, hero, stats, power profile picker, plus the DEVICES section
-  built from `UPower.devices` (red-highlighted below the low-battery
-  threshold)
+  icon, hero, stats, power profile picker (current source only, like
+  native), the On AC/On battery picker (either source, added here),
+  plus the DEVICES section built from `UPower.devices`
+  (red-highlighted below the low-battery threshold)
 - `Model.js` — cloned from `omarchy.power`'s `Model.js` (icon glyph,
   profile parsing, charge-threshold detection), plus the other-devices
   list/icon/name helpers for the DEVICES section
@@ -50,6 +51,17 @@ Peripheral low-battery notifications use `omarchy-notification-send`
 directly rather than `omarchy-battery-low` (which also runs the
 `battery-low` hooks meant for the laptop's own battery — running those
 for a mouse would be wrong).
+
+`omarchy-powerprofiles-set <ac|battery> [profile]` always applies the
+given profile live, with no "just remember it" mode — it doesn't check
+whether that source is actually the active one. So setting the
+inactive source's profile (e.g. picking the battery profile while
+plugged in) briefly flips the live profile; `setSourceProfile()` in
+`BarWidget.qml` corrects this by reasserting whichever source is truly
+active right after (`reapplyCurrentProfile()`). The remembered value
+per source lives in `$XDG_STATE_HOME/omarchy/powerprofiles/{ac,battery}`
+(overridable via `OMARCHY_POWERPROFILES_STATE_DIR`) — there's no CLI
+getter for it, so `BarWidget.qml` reads those two files directly.
 
 ## Commits and releases
 

@@ -22,6 +22,12 @@ Panel {
   property string activeProfile: ""
   property int profileIndex: 0
   property bool cursorActive: false
+  // Remembered profile per power source (laptop-only, like the rest of this
+  // widget — omarchy-powerprofiles-set stores these in
+  // $XDG_STATE_HOME/omarchy/powerprofiles/{ac,battery}), independent of
+  // which source is actually active right now.
+  property string acProfile: ""
+  property string batteryProfile: ""
   readonly property bool showPercentage: setting("showPercentage", false) === true
   // With the percentage shown the button paints a text block wider than an
   // icon, so the open-panel mark takes the painted width instead of the
@@ -181,6 +187,13 @@ Panel {
     if (!batteryProc.running) batteryProc.running = true
     if (!profilesProc.running) profilesProc.running = true
     if (!systemProc.running) systemProc.running = true
+    if (!sourceProfilesProc.running) sourceProfilesProc.running = true
+  }
+
+  function updateSourceProfiles(raw) {
+    var lines = String(raw || "").split("\n")
+    root.acProfile = (lines[0] || "").trim()
+    root.batteryProfile = (lines[1] || "").trim()
   }
 
   function updateKeyValue(raw, targetName) {
@@ -210,6 +223,17 @@ Panel {
     if (!profile || actionProc.running) return
     actionProc.command = ["omarchy-powerprofiles-set", root.discharging ? "battery" : "ac", profile]
     actionProc.running = true
+  }
+
+  // Sets the remembered profile for a given source (ac/battery), regardless
+  // of which one is actually active right now — e.g. picking the battery
+  // profile while still plugged in. omarchy-powerprofiles-set always
+  // applies what it's given live, with no "just remember it" mode, so this
+  // corrects that afterward by reasserting whichever source is truly active.
+  function setSourceProfile(source, profile) {
+    if (!profile || sourceProfileProc.running) return
+    sourceProfileProc.command = ["omarchy-powerprofiles-set", source, profile]
+    sourceProfileProc.running = true
   }
 
   function togglePercentage() {
@@ -258,6 +282,30 @@ Panel {
   Process {
     id: actionProc
     onExited: root.refresh()
+  }
+
+  Process {
+    id: sourceProfilesProc
+    // printf "%s\n" "$(cat ...)" always emits exactly one line per source,
+    // even when the file (or the whole state dir) doesn't exist yet —
+    // plain `cat; echo; cat` would drop a line and misalign ac/battery.
+    command: ["bash", "-c", "dir=\"${OMARCHY_POWERPROFILES_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/powerprofiles}\"; printf '%s\\n' \"$(cat \"$dir/ac\" 2>/dev/null)\"; printf '%s\\n' \"$(cat \"$dir/battery\" 2>/dev/null)\""]
+    stdout: StdioCollector { waitForEnd: true; onStreamFinished: root.updateSourceProfiles(text) }
+  }
+
+  Process {
+    id: sourceProfileProc
+    onExited: root.reapplyCurrentProfile()
+  }
+
+  Process {
+    id: reapplyProfileProc
+    onExited: root.refresh()
+  }
+
+  function reapplyCurrentProfile() {
+    reapplyProfileProc.command = ["omarchy-powerprofiles-set", root.discharging ? "battery" : "ac"]
+    reapplyProfileProc.running = true
   }
 
   Timer { interval: 5000; running: root.opened; repeat: true; onTriggered: root.refresh() }
@@ -537,6 +585,58 @@ Panel {
                   if (h) {
                     root.cursorActive = true
                     root.profileIndex = index
+                  }
+                }
+              }
+            }
+          }
+
+          // The picker above only ever touches whichever source is live
+          // right now — this lets a profile be set for the other one too
+          // (e.g. pick the battery profile without unplugging first).
+          Repeater {
+            model: [
+              { source: "ac", label: "On AC", value: root.acProfile, isCurrent: !root.discharging },
+              { source: "battery", label: "On battery", value: root.batteryProfile, isCurrent: root.discharging }
+            ]
+
+            Row {
+              id: sourceRow
+              required property var modelData
+              width: parent.width
+              spacing: Style.space(8)
+
+              Text {
+                textFormat: Text.PlainText
+                text: sourceRow.modelData.label + (sourceRow.modelData.isCurrent ? " · now" : "")
+                color: sourceRow.modelData.isCurrent ? root.bar.foreground : Qt.darker(root.bar.foreground, 1.4)
+                font.family: root.bar.fontFamily
+                font.pixelSize: Style.font.bodySmall
+                font.bold: sourceRow.modelData.isCurrent
+                width: Style.space(84)
+                elide: Text.ElideRight
+                anchors.verticalCenter: parent.verticalCenter
+              }
+
+              Row {
+                spacing: Style.space(4)
+                anchors.verticalCenter: parent.verticalCenter
+
+                Repeater {
+                  model: root.profiles
+                  Button {
+                    required property var modelData
+                    iconText: root.profileIcon(String(modelData))
+                    iconSize: Style.font.body
+                    tooltipText: String(modelData).charAt(0).toUpperCase() + String(modelData).slice(1)
+                    fontSize: Style.font.bodySmall
+                    foreground: root.bar.foreground
+                    fontFamily: root.bar.fontFamily
+                    horizontalPadding: Style.spacing.controlPaddingX
+                    verticalPadding: Style.spacing.controlPaddingY
+                    bordered: true
+                    active: sourceRow.modelData.value === modelData
+                    onClicked: root.setSourceProfile(sourceRow.modelData.source, modelData)
                   }
                 }
               }

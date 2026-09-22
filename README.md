@@ -11,6 +11,9 @@ profile picker), with a **DEVICES** section added.
 - Everything the native `omarchy.power` widget has: battery icon and
   percentage, charge/discharge status, battery size and cycle count,
   time left/to full, and the power profile picker.
+- Below that picker, a compact "On AC" / "On battery" row lets you set
+  the profile for **either** power source without having to unplug (or
+  plug in) first — laptop-only, like the rest of this widget.
 - Its popup adds a **DEVICES** section listing every other UPower
   device reporting a charge level — Bluetooth/USB mouse, keyboard,
   headset, game controller, etc. Each row has a mini charge meter and
