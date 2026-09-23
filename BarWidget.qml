@@ -446,7 +446,7 @@ Panel {
             id: barTrack
             anchors.fill: parent
             radius: height / 2
-            color: Qt.rgba(root.bar.foreground.r, root.bar.foreground.g, root.bar.foreground.b, 0.12)
+            color: Util.alpha(root.bar.foreground, 0.12)
           }
 
           Rectangle {
@@ -640,7 +640,7 @@ Panel {
                 Rectangle {
                   anchors.fill: parent
                   radius: height / 2
-                  color: Qt.rgba(root.bar.foreground.r, root.bar.foreground.g, root.bar.foreground.b, 0.12)
+                  color: Util.alpha(root.bar.foreground, 0.12)
                 }
 
                 Rectangle {
