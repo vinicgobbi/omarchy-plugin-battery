@@ -1,3 +1,9 @@
+## v0.1.2 (2026-10-03)
+
+### Fix
+
+- **security**: aviso de bateria baixa de periférico começa com texto fixo (um dispositivo Bluetooth chamado --replace-id=1 fazia o aviso falhar, --image=… o trocava) e o nome do dispositivo perde caracteres de controle
+
 ## v0.1.1 (2026-10-03)
 
 ### Fix
