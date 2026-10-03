@@ -30,7 +30,11 @@ function isPeripheral(device) {
 // low-battery notification's headline.
 function peripheralName(device) {
   var d = device || {}
-  var name = d.model && String(d.model).trim() !== "" ? String(d.model).trim() : "Device"
+  // The model name comes from the device itself (any Bluetooth device
+  // nearby picks its own): no control characters, so it can't break lines
+  // or carry escape sequences into the notification.
+  var model = String(d.model || "").replace(/[\u0000-\u001f\u007f]/g, " ").trim()
+  var name = model !== "" ? model : "Device"
   return name.length > 60 ? name.slice(0, 59) + "…" : name
 }
 

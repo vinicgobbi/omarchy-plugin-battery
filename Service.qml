@@ -76,9 +76,13 @@ Item {
     // Mirrors omarchy-battery-low's own notification (glyph, urgency, icon,
     // timeout, phrasing) — just naming the device, and skipping its
     // battery-low hooks, which are for the laptop's own battery.
+    // The headline starts with fixed text: the helper reads leading
+    // "--option=value" words as options, and a Bluetooth device can be named
+    // anything by whoever is nearby ("--replace-id=1" would make the warning
+    // fail, "--image=…" would swap it).
     peripheralWarningProcess.command = [
       "omarchy-notification-send", "-g", "󱐋", "-u", "critical", "-i", "battery-caution", "-t", "30000",
-      next.name + ": time to recharge!", "Battery is down to " + next.level + "%"
+      "Time to recharge: " + next.name, "Battery is down to " + next.level + "%"
     ]
     peripheralWarningProcess.running = true
   }
