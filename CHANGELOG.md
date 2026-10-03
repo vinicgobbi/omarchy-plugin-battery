@@ -1,3 +1,14 @@
+## v0.1.1 (2026-10-03)
+
+### Fix
+
+- adiciona keepLoaded (Service.qml não pode ser derrubado pelo hot-reload do bar-widget, igual ao omarchy.media)
+- disable qmllint's alias category too
+
+### Refactor
+
+- usa Util.alpha() em vez de Qt.rgba(x.r,x.g,x.b,N) na mão
+
 ## v0.1.0 (2026-09-22)
 
 ### Feat
